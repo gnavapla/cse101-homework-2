@@ -15,7 +15,12 @@ int nodeHeight(const Node* node) {
 
 void updateHeight(Node* node) {
     if(node== nullptr){return;}
+    // // cout << "Updating Height for " << node->data.departure << endl;
     int left_height = 0,right_height = 0;
+    if(node->left == nullptr && node->right == nullptr){
+        node->height = 0;
+        return;
+    }
     if(node->left != nullptr){
         left_height = node->left->height;
     }
@@ -26,8 +31,8 @@ void updateHeight(Node* node) {
         node->height = left_height+1;
     }else {
         node->height = right_height+1;
-    }
-
+    } 
+    
 } 
 
 int balanceFactor(const Node* node) {
@@ -37,12 +42,10 @@ int balanceFactor(const Node* node) {
         return 0;
     }
     if(node->left != nullptr){
-        cout << "Left "<<node->left->height << " Name: "<< node->left->data.departure<< endl;
-        turner += node->left->height;
+        turner += node->left->height + 1;
     }
     if(node->right != nullptr){
-        cout << "Right "<<node->right->height << endl;
-        turner -= node->right->height;
+        turner -= node->right->height + 1;
     }
     return turner;// left>right ->bf>0, right>left ->bf<0
 } 
@@ -53,7 +56,9 @@ Node* rotateLeft(Node* root) {
     }
     Node* turner = root->right;
     root->right = turner->left;
-    turner->right = root;
+    turner->left = root;
+    updateHeight(root);
+    updateHeight(turner);
     return turner;
 } 
 
@@ -63,17 +68,41 @@ Node* rotateRight(Node* root) {
     }
     Node* turner = root->left;
     root->left = turner->right;
-    turner->left = root;
+    turner->right= root;
+    updateHeight(root);
+
+    updateHeight(turner);
     return turner;
+}
+void print_childs(Node* turner){
+    // // // cout << "First Height " << turner->height << endl;
+    // // cout << "New Root: " << turner->data.departure << " HEIGHT: " << turner->height << endl;
+    // // cout << "WITH CHILDREN: LEFT | ";
+    if(turner->left == nullptr){
+      // // cout << "NONE";
+    }else{
+        // // cout << turner->left->data.departure << " Height " << turner->left->height;
+    }
+    // // cout << " | RIGHT | ";
+    if(turner->right== nullptr){
+        // // cout << "NONE";
+    }else{
+       // // cout << turner->right->data.departure << " Height " << turner->right->height;
+    }
+    // // cout << endl;
+    updateHeight(turner);
+    // // cout << "Last Height " << turner->height << endl;
 }
 
 Node* rebalance(Node* root) {
-    cout<< "The root is: "<< root->data.departure<< " with height "<< root->height<< endl;
+    // // // cout<< "The root is: "<< root->data.departure<< " with height "<< root->height<< endl;
     Node* turner = nullptr;
     int bf_case= 0;
-    if(balanceFactor(root)<2 && balanceFactor(root)>2){
+    // // // cout << "Balance factor of " << root->data.departure << " :" << balanceFactor(root) << endl;
+    if(balanceFactor(root)<2 && balanceFactor(root)> -2){
         return root;
     }
+    // // cout << "The balance is wrong by " << balanceFactor(root)<< endl;
     //Check which balancing case is it.
     if (balanceFactor(root) == 2 && balanceFactor(root->left)>= 0){
         bf_case = R;
@@ -85,7 +114,7 @@ Node* rebalance(Node* root) {
     } else if(balanceFactor(root) == -2 && balanceFactor(root->right)>0){
         bf_case = RL;
     }
-    cout << "The balance factor case is " << bf_case<< endl;
+    // // cout << "The balance factor case is " << bf_case << " With old Root " << root->data.departure << endl;
     switch(bf_case){
         case L:
             turner = rotateLeft(root);
@@ -96,40 +125,57 @@ Node* rebalance(Node* root) {
         case LR:
              root->left = rotateLeft(root->left);
              turner = rotateRight(root);
+             // // cout << "NODE: " << root->data.departure << " HAS HEIGHT " << root->height << endl;
+             print_childs(root);
+             // // cout << "NODE: " << turner->data.departure<< " HAS HEIGHT " << turner->height << endl;
              break;
         case RL:
              root->right = rotateRight(root->right);
              turner = rotateLeft(root);
+             // // cout << "NODE: " << root->data.departure<< " HAS HEIGHT " << root->height << endl;
+             // // cout << "NODE: " << turner->data.departure<< " HAS HEIGHT " << turner->height << endl;
              break;
         default:
             return root;
     }
-
+    print_childs(turner);
     return turner;
 } 
 
 Node* insertNode(Node* root, Node* newNode) {
     newNode->height = 0;
-    if(root==nullptr){
+        if(root==nullptr){
         return newNode;
     }
+    // // // cout<< "BEING " << root->data.departure << " " << newNode->data.departure << endl;
+
     if(root->data.departure >= newNode->data.departure){
         if(root->left == nullptr){
-             root->height+=1;
+            // // // cout << "INSERTING " << newNode->data.departure << " IN LEFT "<< "WITH PARENT " << root->data.departure<< endl;
              root->left = newNode;
+             updateHeight(root);
+              // // cout << "THE LEFT CHILD OF " << root->data.departure << " IS NOW " << root->left->data.departure  << " WITH HEIGHT " << root->height << endl;
              return rebalance(root);
         }
         root->left = insertNode(root->left,newNode);
     }
     else{
         if(root->right == nullptr){
-             root->height+=1;
+             // // // cout << "INSERTING " << newNode->data.departure << " IN RIGHT "<< "WITH PARENT " << root->data.departure<< endl;
             root->right = newNode;
-            return rebalance(root)  ;
+            updateHeight(root);
+             // // cout << "THE RIGHT CHILD OF " << root->data.departure << " IS NOW " << root->right->data.departure << " WITH HEIGHT " << root->height << endl;
+
+            return rebalance(root);
         }
+
+
         root->right = insertNode(root->right,newNode);
         
     }
+
+    updateHeight(root);
+    // // cout << "THE CHILDREN OF " << root->data.departure << " WHERE UNCHANGED, BUT NOW HAS HEIGHT " << root->height << " AND BL "<< balanceFactor(root)<< endl;
     return rebalance(root);
 }
 
@@ -171,6 +217,7 @@ Node* deleteNode(Node* root, int departure) {
             turner->right->left = deleteNode(root,departure);
         }
     }
+    updateHeight(root);
     return rebalance(root);
 }
 
@@ -178,14 +225,14 @@ const Node* findNode(const Node* root, int departure) {
     if(root== nullptr){
         return nullptr;
     }
-    if(root->data.departure  > departure){
+    if(root->data.departure  < departure){
         if(root->right!=nullptr){
             return findNode(root->right,departure);
         }
         else {
             return nullptr;
         }
-    } else if (root->data.departure < departure){
+    } else if (root->data.departure > departure){
         if(root->left!=nullptr){
             return findNode(root->left,departure);
         }
@@ -205,19 +252,13 @@ const Node* earliestNode(const Node* root, int departure) {
         return nullptr;
     }
     const Node* best_choice = nullptr;
-    if(departure > root->data.departure){
-        if(root->left==nullptr){
-            return best_choice;
-        }
-        best_choice = earliestNode( root->left,departure);
-    }
-    else{// We have secured that best_choice->data.departure - departure > 0, we are also know
-         // that root->data.departure - departure > 0 so we only need to compare
-         //  (best_choice->data.departure - departure) - (root->data.departure - departure) >= 0 
-        // I.E. best_choice->data.departure - root->data.departure >= 0 otherwise that implies that
-        // root->data.departure is a worse option to best_choice
-        if(best_choice != nullptr && best_choice->data.departure - root->data.departure >= 0 ){
-            best_choice = root;
+    Node* next = (Node*)root;
+    while(next != nullptr){
+        if(next->data.departure >= departure ){
+            best_choice = next;
+            next = next ->left;
+        }else{
+            next = next ->right;
         }
     }
     return best_choice;
@@ -225,23 +266,17 @@ const Node* earliestNode(const Node* root, int departure) {
 
 void findRange(const Node* root, int start, int end,
                const Node* results[], int& count) {
-    (void)results;
     if(root == nullptr){
         return ;
     }
-    if(root->data.departure >= start && root->data.departure <= end){
-        count ++;
-        if(root->left!=nullptr){
-            findRange(root->left,start,end,results,count);
-        }
-        if(root->right!=nullptr){
-            findRange(root->right,start,end,results,count);
-        }
-    } else if(root->data.departure > end && root->left != nullptr){
+    if(root->data.departure > start && root->left!= nullptr){
         findRange(root->left,start,end,results,count);
-        return;
-    } else  if(root->data.departure < start && root->right != nullptr){
-        findRange(root->right,start,end,results,count);
-        return;
     }
+    if(root->data.departure >= start && root->data.departure <= end){
+        results[count] = root;
+        count ++;
+    } 
+    if(root->data.departure < end && root->right != nullptr){
+        findRange(root->right,start,end,results,count);
+    } 
 }
