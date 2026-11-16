@@ -1,6 +1,5 @@
 // Implement only this file. See avl.h and the assignment for contracts.
 #include "avl.h"
-#include <iostream>
 #define R 0
 #define L 1
 #define RL 2
