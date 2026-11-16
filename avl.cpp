@@ -189,32 +189,34 @@ Node* deleteNode(Node* root, int departure) {
     else if(root->data.departure < departure){
         root->right = deleteNode(root->right,departure);
     }
+    // Found the rat
     else if(root->data.departure == departure){
         Node* turner= nullptr;
-        if(root->right != nullptr){
-            if(root->left == nullptr){
+        if(root->right != nullptr && root->left!=nullptr){
+            // First Swap
+            Node* next=  root->right;
+            while(next->left != nullptr){
+                // Go to the right most right
+                next = next-> left;
+            }
+            // Root data does not need to be saved (will be deleted anyways)
+            root->data = next->data;
+            root->right = deleteNode(root->right, next->data.departure);
+
+        }
+        else if(root->right != nullptr){
+                turner = root->right;
+                // We know that root->left = nullptr
+                delete root;
+                return turner;
+
+        } else if(root->left!= nullptr){
                 turner = root->left;
                 delete root;
-                return rebalance(turner);
-            }
-            if(root->right->left == nullptr){
-                root->right->left = root->left;
-                turner = root->right;
+                return turner;
+        } else{
                 delete root;
-                return rebalance(turner);
-            }
-            // First Swap
-            Node* right,* left;
-            right = root->right;
-            left = root->left;
-            turner = root->right->left;
-            // Swap Places
-            root->right = turner->right;
-            root->left = turner->left;
-            turner->right = right;
-            turner->left = left;
-            // Recursive again until the root is finally deleted
-            turner->right->left = deleteNode(root,departure);
+                return nullptr;
         }
     }
     updateHeight(root);
